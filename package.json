@@ -1,0 +1,31 @@
+{
+author: {
+name: "Panagiotis Skarvelis",
+url: "http://www.skarvelis.gr",
+email: "panagiotis@skarvelis.gr"
+},
+scripts: {
+test: "node test.js"
+},
+dependencies: {
+"mime": ">= 1.2.11"
+ },
+description: "A tiny server for static files",
+licenses: [
+{
+type: "MIT",
+url: "https://raw.github.com/sl45sms/TinyStaticServer/master/LICENSE"
+}
+],
+devDependencies: { },
+keywords: [
+"tiny"
+],
+main: "tiny.js",
+name: "tiny",
+repository: {
+url: "https://github.com/sl45sms/TinyStaticServer",
+type: "git"
+},
+version: "1.0.0"
+}

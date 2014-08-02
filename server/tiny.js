@@ -5,6 +5,8 @@ var http = require("http"),
 
 //Inits
 var port = process.argv[2] || 10631;
+var www  = process.argv[3] || path.join(__dirname,"../www/")
+
 
 ////////////////////////////////////////////////////////////////////////
 //Utils
@@ -29,11 +31,11 @@ http.createServer(function(request, response) {
    var url_parts = url.parse(request.url, true)
     , query = url_parts.query
     , uri = url.parse(request.url).pathname
-    , filename = path.join(__dirname, '../www/', uri)
+    , filename = path.join(www, uri)
     , from = request.headers['x-forwarded-for'] || request.connection.remoteAddress;//TODO h ip h to onoma gia na kano login limit
 
 //console.log(from);
-//console.log(filename);
+console.log(filename);
 
 {
  //Serve static files 

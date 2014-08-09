@@ -46,10 +46,10 @@ case "html":
    type="text/html";
 break;
 case "json":
-   type="text/html";
+   type="application/json";
 break;
 case "js":
-   type="application/json";
+   type="application/javascript";
 break;
 case "jpeg":
 case "jpg":

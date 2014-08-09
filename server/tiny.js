@@ -2,15 +2,24 @@ var http = require("http"),
     url = require("url"),
     path = require("path"),
     fs = require("fs");
+var mime;
+try {
+  mime = require("mime").lookup;
+} catch(e) {
+  mime = get_mime;   
+}
 
 //Inits
 var port = process.argv[2] || 10631;
 var www  = process.argv[3] || path.join(__dirname,"../www/")
 
-
 ////////////////////////////////////////////////////////////////////////
 //Utils
 ////////////////////////////////////////////////////////////////////////
+function getExtension(filename) {
+    return filename.split('.').pop();
+}
+
 function parseCookies (request) {
     var list = {},
         rc = request.headers.cookie;
@@ -24,6 +33,38 @@ function parseCookies (request) {
 }
 
 ////////////////////////////////////////////////////////////////////////
+//common mime types (for complete list use node-mime module)
+////////////////////////////////////////////////////////////////////////
+function get_mime(filename){
+var type="";
+switch(getExtension(filename)){
+case "css":
+     type="text/css";
+break;
+case "htm":
+case "html":
+   type="text/html";
+break;
+case "json":
+   type="text/html";
+break;
+case "js":
+   type="application/json";
+break;
+case "jpeg":
+case "jpg":
+   type="image/jpeg";
+break;
+case "png":
+   type="image/png";
+break;
+case "gif":
+   type="image/gif";
+break;
+};
+return type;
+}
+////////////////////////////////////////////////////////////////////////
 // Server
 //////////////////////////////////////////////////////////////////////// 
 http.createServer(function(request, response) {
@@ -35,18 +76,11 @@ http.createServer(function(request, response) {
     , from = request.headers['x-forwarded-for'] || request.connection.remoteAddress;//TODO h ip h to onoma gia na kano login limit
 
 //console.log(from);
-console.log(filename);
+//console.log(filename);
 
 {
  //Serve static files 
- /*
-  * Den yparxei logos na dino to mime type
-  * gia kathe typo arxeiou (html,jpg,js,json klp)  
-  * mias kai o apache proxy to diorthonei....
-  * opote stelno ola xoris mime san binary...
-  * 
-  */
-   
+  
    //Just for fun :) 
    if ((filename.indexOf("serve")>-1)||(filename.indexOf("..")>-1)) {
       response.writeHead(418, {"Content-Type": "text/html"});
@@ -81,7 +115,7 @@ console.log(filename);
         return;
       }
       
-      response.writeHead(200);
+      response.writeHead(200,{"Content-Type":mime(filename)});
       response.write(file, "binary");
       response.end();
     });

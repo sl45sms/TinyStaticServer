@@ -1,4 +1,5 @@
 var http = require("http"),
+    https = require('https'),
     url = require("url"),
     path = require("path"),
     fs = require("fs");
@@ -11,7 +12,9 @@ try {
 
 //Inits
 var port = process.argv[2] || 10631;
-var www  = process.argv[3] || path.join(__dirname,"../www/")
+var www  = process.argv[3] || path.join(__dirname,"../www/"); //Have to be fullpath
+var protocol = process.argv[4]=="https"?"https":"http" || "http";
+
 
 ////////////////////////////////////////////////////////////////////////
 //Utils
@@ -66,19 +69,18 @@ return type;
 }
 ////////////////////////////////////////////////////////////////////////
 // Server
-//////////////////////////////////////////////////////////////////////// 
-http.createServer(function(request, response) {
+////////////////////////////////////////////////////////////////////////
+
+var Server = function(request, response) {
  
    var url_parts = url.parse(request.url, true)
     , query = url_parts.query
     , uri = url.parse(request.url).pathname
     , filename = path.join(www, uri)
-    , from = request.headers['x-forwarded-for'] || request.connection.remoteAddress;//TODO h ip h to onoma gia na kano login limit
-
-//console.log(from);
-//console.log(filename);
+    , from = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
 
 {
+  console.log(filename);
  //Serve static files 
   
    //Just for fun :) 
@@ -123,6 +125,15 @@ http.createServer(function(request, response) {
 
 }
 
-}).listen(parseInt(port, 10));
- 
-console.log("TinyStaticServer running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");
+}
+
+if(protocol=="https"){
+var options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+  https.createServer(options,Server).listen(parseInt(port, 10));
+} else
+  http.createServer(Server).listen(parseInt(port, 10));
+
+console.log("TinyStaticServer running at\n  => "+protocol+"://localhost:" + port + "/\nCTRL + C to shutdown");

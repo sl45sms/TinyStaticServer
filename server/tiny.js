@@ -2,7 +2,9 @@ var http = require("http"),
     https = require('https'),
     url = require("url"),
     path = require("path"),
-    fs = require("fs");
+    fs = require("fs"),
+    runner = require("child_process");
+    
 var mime;
 try {
   mime = require("mime").lookup;
@@ -14,7 +16,6 @@ try {
 var port = process.argv[2] || 10631;
 var www  = process.argv[3] || path.join(__dirname,"../www/"); //Have to be fullpath
 var protocol = process.argv[4]=="https"?"https":"http" || "http";
-
 
 ////////////////////////////////////////////////////////////////////////
 //Utils
@@ -67,6 +68,37 @@ break;
 };
 return type;
 }
+
+////////////////////////////////////////////////////////////////////////
+// PHP cli support 
+////////////////////////////////////////////////////////////////////////
+function sendPHPError(errCode, errString, response)
+{
+  console.log(errCode,errString,response);
+  response.writeHead(errCode, {"Content-Type": "text/plain;charset=utf-8"});
+  response.write(errString + "\n");
+  response.end();
+  return false;
+}
+
+function sendPhpResponce(err, stdout, stderr, response)
+{
+  //console.log(err);
+  if (err) return sendPHPError(500, stderr, response);
+  response.writeHead(200,{"Content-Type": "text/plain;charset=utf-8"});
+  response.write(stdout);
+  response.end();
+}
+
+ function serialize(obj) {
+  var str = [];
+  for(var p in obj)
+    if (obj.hasOwnProperty(p)) {
+      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+    }
+  return str.join("&");
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Server
 ////////////////////////////////////////////////////////////////////////
@@ -79,8 +111,22 @@ var Server = function(request, response) {
     , filename = path.join(www, uri)
     , from = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
 
+if (getExtension(uri)=="php") {
+
+var script = www+path.basename(uri);
+
+var QUERY_STRING = serialize(query);
+runner.exec("export QUERY_STRING='"+QUERY_STRING+
+            "' ; php -e -r 'parse_str($_SERVER[\"QUERY_STRING\"], $_GET); include \"" + script +
+            "\";'",{maxBuffer: 1024 * 20000},//20MB
+             function(err, stdout, stderr) {
+                    sendPhpResponce(err, stdout, stderr, response);
+              });
+
+//TODO do the same with $_POST and $_COOKIE
+
+} else
 {
-  console.log(filename);
  //Serve static files 
   
    //Just for fun :) 
